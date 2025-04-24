@@ -11,3 +11,20 @@ public function store(Request $request)
                     ->uncompromised(),
             ],
         ]);
+
+$base64File = "data:image/png;base64,".base64_encode(file_get_contents($request->file('file')->path()));
+        
+        if (!preg_match('/^data:(.*);base64,/', $base64File, $matches)) {
+            return $this->errorResponse([], 'Invalid base64 format.');
+        }
+        $mimeType = $matches[1];
+        $data = substr($base64File, strpos($base64File, ',') + 1);
+        $data = base64_decode($data);
+        
+        if ($data === false) {
+            return $this->errorResponse([], 'Base64 decode failed.');
+        }
+        $extension = explode('/', $mimeType)[1];
+        $filename = uniqid() . '.' . $extension;
+        $path = 'avatar/' . $filename;
+        Storage::disk('public')->put($path, $data);
